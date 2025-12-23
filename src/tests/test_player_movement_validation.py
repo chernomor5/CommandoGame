@@ -54,7 +54,7 @@ class FakeBoard:
     def get_cell(self, x: int, y: int) -> FakeCell:
         return self.grid[y][x]
 
-    def neighbors4(self, x: int, y: int):
+    def neighbors(self, x: int, y: int):
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             nx, ny = x + dx, y + dy
             if self.is_in_bounds(nx, ny):

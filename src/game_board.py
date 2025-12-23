@@ -32,10 +32,10 @@ class GameBoard:
            GameBoard(width=..., height=...)
            Creates a plain-only board with building=0.
         """
-        # Geometry / test mode takes precedence
+        # Geometry / test mode
         if width is not None or height is not None:
             if width is None or height is None:
-                raise ValueError("If using width/height mode, both width and height must be provided")
+                raise ValueError("Both width and height must be provided")
 
             self.WIDTH = int(width)
             self.HEIGHT = int(height)
@@ -45,13 +45,7 @@ class GameBoard:
                 row: List[GameCell] = []
                 for x in range(self.WIDTH):
                     terrain = [False] * 8
-                    terrain[TERRAIN_INDEX["sea"]] = False
-                    terrain[TERRAIN_INDEX["swamp"]] = False
                     terrain[TERRAIN_INDEX["plain"]] = True
-                    terrain[TERRAIN_INDEX["forest"]] = False
-                    terrain[TERRAIN_INDEX["road"]] = False
-                    terrain[TERRAIN_INDEX["railroad"]] = False
-                    terrain[TERRAIN_INDEX["shore"]] = False
                     terrain[TERRAIN_INDEX["building"]] = 0
                     row.append(GameCell(x, y, tuple(terrain)))
                 self.grid.append(row)
@@ -59,11 +53,11 @@ class GameBoard:
             self._recompute_shores()
             return
 
-        # CSV mode (existing behavior)
-        self.grid: List[List[GameCell]] = []
+        # CSV mode
         if csv_path is None:
-            raise ValueError("csv_path cannot be None when width/height are not provided")
+            raise ValueError("csv_path cannot be None")
 
+        self.grid: List[List[GameCell]] = []
         self.load_from_csv(csv_path)
 
     # -------------------------------------------------
@@ -108,7 +102,7 @@ class GameBoard:
                 x = parse_int(row["x"])
                 y = parse_int(row["y"])
 
-                if not self._in_bounds(x, y):
+                if not self.is_in_bounds(x, y):
                     raise ValueError(f"Out of bounds cell: ({x},{y})")
 
                 sea = parse_bool(row["sea"])
@@ -153,37 +147,39 @@ class GameBoard:
         self._recompute_shores()
 
     # -------------------------------------------------
-    # Helpers
-    # -------------------------------------------------
-
-    def _in_bounds(self, x: int, y: int) -> bool:
-        return 0 <= x < self.WIDTH and 0 <= y < self.HEIGHT
-
-    def get_cell(self, x: int, y: int) -> GameCell:
-        return self.grid[y][x]
-
-    def _neighbors_4(self, x: int, y: int):
-        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-            nx, ny = x + dx, y + dy
-            if self._in_bounds(nx, ny):
-                yield self.get_cell(nx, ny)
-
-    # -------------------------------------------------
-    # Check if cell is in bounds
+    # Geometry helpers
     # -------------------------------------------------
 
     def is_in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.WIDTH and 0 <= y < self.HEIGHT
 
-    # -------------------------------------------------
-    # Yields cell's 4-directionally adjacent coordinates
-    # -------------------------------------------------
+    def get_cell(self, x: int, y: int) -> GameCell:
+        return self.grid[y][x]
 
-    def neighbors4(self, x: int, y: int):
+    def neighbors(self, x: int, y: int, neighbor_count: int = 4):
         """
-        Yield 4-directionally adjacent (nx, ny) coordinates that are within bounds.
+        Yield neighboring (nx, ny) coordinates.
+
+        neighbor_count:
+          - 4 (default): orthogonal neighbors only
+          - 8: orthogonal + diagonal neighbors
         """
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        if neighbor_count == 4:
+            directions = (
+                (1, 0), (-1, 0),
+                (0, 1), (0, -1),
+            )
+        elif neighbor_count == 8:
+            directions = (
+                (1, 0), (-1, 0),
+                (0, 1), (0, -1),
+                (1, 1), (1, -1),
+                (-1, 1), (-1, -1),
+            )
+        else:
+            raise ValueError("neighbor_count must be 4 or 8")
+
+        for dx, dy in directions:
             nx, ny = x + dx, y + dy
             if self.is_in_bounds(nx, ny):
                 yield nx, ny
@@ -201,12 +197,12 @@ class GameBoard:
         for y in range(self.HEIGHT):
             for x in range(self.WIDTH):
                 cell = self.get_cell(x, y)
-
                 if cell.is_water():
                     self._set_shore(cell, False)
                 else:
                     touches_water = any(
-                        n.is_water() for n in self._neighbors_4(x, y)
+                        self.get_cell(nx, ny).is_water()
+                        for nx, ny in self.neighbors(x, y, neighbor_count=4)
                     )
                     self._set_shore(cell, touches_water)
 
@@ -282,21 +278,20 @@ class GameBoard:
         x2: Optional[int] = None,
         y2: Optional[int] = None,
     ) -> None:
-
         if x1 is None:
             for row in self.grid:
                 for cell in row:
                     print(cell)
             return
 
-        if not self._in_bounds(x1, y1):
+        if not self.is_in_bounds(x1, y1):
             raise ValueError("Coordinates out of bounds")
 
         if x2 is None:
             print(self.get_cell(x1, y1))
             return
 
-        if not self._in_bounds(x2, y2):
+        if not self.is_in_bounds(x2, y2):
             raise ValueError("Coordinates out of bounds")
 
         for y in range(min(y1, y2), max(y1, y2) + 1):

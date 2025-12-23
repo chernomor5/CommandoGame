@@ -314,7 +314,7 @@ class Player:
             if (x, y) == (target_x, target_y):
                 return True
 
-            for nx, ny in board.neighbors4(x, y):
+            for nx, ny in board.neighbors(x, y):
                 if (nx, ny) in visited:
                     continue
                 cell = board.get_cell(nx, ny)
