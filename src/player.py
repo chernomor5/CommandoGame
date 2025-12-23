@@ -643,3 +643,25 @@ class Player:
         No return value.
         """
         self.on_land, self.on_water = self.on_water, self.on_land
+        
+    def pickup_helicopter_part(self, part) -> bool:
+        """
+        Pick up a helicopter part if it is on the board
+        and located at the player's current position.
+
+        Returns True on success, False otherwise.
+        """
+        # Must be on the board
+        if not part.is_played():
+            return False
+
+        # Must be at the same position
+        if (part.x, part.y) != (self.x, self.y):
+            return False
+
+        # Remove from board and collect
+        color = part.remove_from_board()
+        self.parts.append(color)
+
+        return True
+

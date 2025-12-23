@@ -61,3 +61,12 @@ BALANCE = {
     },
 }
 
+# -------------------------------------------------
+# Helicopter part constants
+# -------------------------------------------------
+
+HELICOPTER_COLORS = {"RED", "GREEN", "BLUE"}
+
+MAX_PARTS_OF_COLOR = 2
+MAX_PARTS = MAX_PARTS_OF_COLOR * len(HELICOPTER_COLORS)
+
