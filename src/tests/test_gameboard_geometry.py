@@ -106,3 +106,52 @@ def test_neighbors_with_diagonals(board_3x3):
     assert (1, 2) in neighbors
     assert (1, 0) in neighbors
     
+def test_neighbors8_center_returns_8_unique_coords():
+    b = GameBoard(width=3, height=3)
+
+    nbrs = list(b.neighbors(1, 1, neighbor_count=8))
+
+    assert len(nbrs) == 8
+    assert len(set(nbrs)) == 8  # unique
+    assert (1, 1) not in nbrs   # never includes self
+
+    expected = {
+        (0, 0), (1, 0), (2, 0),
+        (0, 1),         (2, 1),
+        (0, 2), (1, 2), (2, 2),
+    }
+    assert set(nbrs) == expected
+
+
+def test_neighbors8_corner_returns_3_coords():
+    b = GameBoard(width=3, height=3)
+
+    nbrs = set(b.neighbors(0, 0, neighbor_count=8))
+
+    # In-bounds neighbors from top-left corner: right, down, down-right
+    assert nbrs == {(1, 0), (0, 1), (1, 1)}
+
+
+def test_neighbors8_edge_non_corner_returns_5_coords():
+    b = GameBoard(width=3, height=3)
+
+    nbrs = set(b.neighbors(1, 0, neighbor_count=8))  # top edge, middle
+
+    # left, right, down, down-left, down-right
+    assert nbrs == {(0, 0), (2, 0), (1, 1), (0, 1), (2, 1)}
+
+
+def test_neighbors8_all_returned_coords_are_in_bounds():
+    b = GameBoard(width=5, height=4)
+
+    for y in range(b.HEIGHT):
+        for x in range(b.WIDTH):
+            for nx, ny in b.neighbors(x, y, neighbor_count=8):
+                assert b.is_in_bounds(nx, ny) is True
+
+
+def test_neighbors_invalid_neighbor_count_raises():
+    b = GameBoard(width=3, height=3)
+
+    with pytest.raises(ValueError):
+        list(b.neighbors(1, 1, neighbor_count=6))
