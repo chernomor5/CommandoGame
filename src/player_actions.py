@@ -62,7 +62,7 @@ class PlayerActionProvider:
         # Building-based actions (SWAPPED)
         # ----------------------------------------
 
-        if btype == BUILDING_TYPE["hospital"]:
+        if btype == BUILDING_TYPE["hospital"] and player.wound > 0:
             actions.append("heal")
 
         if btype == BUILDING_TYPE["bank"]:
